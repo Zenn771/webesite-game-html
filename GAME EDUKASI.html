@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Matematika Menyenangkan Kelas 8</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #ffe4ec;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    h2, h3 {
+      color: #5a3e36;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .item {
+      border: 2px solid #8b5e3c;
+      padding: 10px 20px;
+      background-color: #fff3f6;
+      cursor: grab;
+      border-radius: 10px;
+      box-shadow: 2px 2px 6px #c9a58a;
+      transition: transform 0.2s;
+    }
+
+    .item:hover {
+      transform: scale(1.05);
+    }
+
+    .drop-zone {
+      border: 3px dashed #8b5e3c;
+      padding: 15px;
+      width: 230px;
+      height: 60px;
+      background-color: #fff0f5;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      margin: 10px 5px;
+      padding: 10px 25px;
+      background-color: #d28a7c;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #a26458;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Game Match Up Matematika Kelas 8</h2>
+
+<div id="start-screen">
+  <p>Masukkan Nama Anda:</p>
+  <input type="text" id="player-name">
+  <br><br>
+  <button id="start-btn">Mulai</button>
+</div>
+
+<div id="game-screen" class="hidden">
+  <h3 id="welcome-msg"></h3>
+  <div class="container" id="questions"></div>
+  <div class="container" id="answers"></div>
+  <button onclick="undoLast()">Undo</button>
+  <button onclick="checkAnswers()">Cek Jawaban</button>
+</div>
+
+<div id="result-screen" class="hidden">
+  <h3 id="result-msg"></h3>
+</div>
+
+<script>
+const questionsData = [
+  { q: "1. Hasil dari 2x + 5 = 11, x = ?", a: "3" },
+  { q: "2. Luas segitiga dengan alas 10 dan tinggi 6?", a: "30" },
+  { q: "3. Akar dari 64 adalah?", a: "8" },
+  { q: "4. 3/4 dari 100 adalah?", a: "75" },
+  { q: "5. Volume kubus sisi 5 cm?", a: "125" },
+  { q: "6. Hasil dari (-3) × 4?", a: "-12" },
+  { q: "7. Panjang sisi miring segitiga siku dengan sisi 6 & 8?", a: "10" },
+  { q: "8. Hasil dari 5² - 3²?", a: "16" },
+  { q: "9. 20% dari 250 adalah?", a: "50" },
+  { q: "10. Sudut dalam segitiga sama sisi?", a: "60" }
+];
+
+let playerName = "";
+let history = [];
+
+document.getElementById("start-btn").addEventListener("click", () => {
+  const nameInput = document.getElementById("player-name").value.trim();
+  if (!nameInput) {
+    alert("Nama tidak boleh kosong.");
+    return;
+  }
+
+  playerName = nameInput;
+  document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("game-screen").classList.remove("hidden");
+  document.getElementById("welcome-msg").textContent = `Halo, ${playerName}! Cocokkan soal dengan jawabannya:`;
+
+  initGame();
+});
+
+function initGame() {
+  const questionsDiv = document.getElementById("questions");
+  const answersDiv = document.getElementById("answers");
+  questionsDiv.innerHTML = "";
+  answersDiv.innerHTML = "";
+  history = [];
+
+  questionsData.forEach((item, index) => {
+    const label = document.createElement("p");
+    label.textContent = item.q;
+
+    const dropZone = document.createElement("div");
+    dropZone.className = "drop-zone";
+    dropZone.id = "q" + index;
+    dropZone.setAttribute("data-answer", item.a);
+    dropZone.ondragover = (e) => e.preventDefault();
+    dropZone.ondrop = (e) => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text/plain");
+      const dragged = document.getElementById(id);
+      if (dragged && dropZone.children.length === 0) {
+        history.push({ item: dragged, parent: dragged.parentNode });
+        dropZone.appendChild(dragged);
+      }
+    };
+
+    questionsDiv.appendChild(label);
+    questionsDiv.appendChild(dropZone);
+  });
+
+  const shuffled = [...questionsData].sort(() => Math.random() - 0.5);
+  shuffled.forEach((item, i) => {
+    const ans = document.createElement("div");
+    ans.className = "item";
+    ans.id = "ans" + i;
+    ans.textContent = item.a;
+    ans.draggable = true;
+    ans.ondragstart = (e) => {
+      e.dataTransfer.setData("text/plain", ans.id);
+    };
+    answersDiv.appendChild(ans);
+  });
+}
+
+function undoLast() {
+  if (history.length === 0) return;
+  const last = history.pop();
+  if (last && last.item && last.parent) {
+    last.parent.appendChild(last.item);
+  }
+}
+
+function checkAnswers() {
+  let score = 0;
+  for (let i = 0; i < questionsData.length; i++) {
+    const zone = document.getElementById("q" + i);
+    const correct = zone.getAttribute("data-answer");
+    const filled = zone.firstChild ? zone.firstChild.textContent : "";
+    if (filled === correct) score++;
+  }
+
+  document.getElementById("game-screen").classList.add("hidden");
+  document.getElementById("result-screen").classList.remove("hidden");
+  document.getElementById("result-msg").textContent = `${playerName}, skor kamu adalah ${score} dari 10.`;
+}
+</script>
+
+</body>
+</html>
